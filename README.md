@@ -240,6 +240,36 @@ function renderMarkdown(content: string): string {
 
 ---
 
+## Testing
+
+Tests are written with [Vitest](https://vitest.dev/) and [Vue Test Utils](https://test-utils.vuejs.org/), using [happy-dom](https://github.com/nicedaycode/happy-dom) as the DOM environment.
+
+```bash
+# Run all tests once
+npm test
+
+# Run in watch mode (re-runs on file changes)
+npx vitest
+
+# Run with browser-like UI
+npm run test:ui
+
+# Run with coverage report
+npm run test:coverage
+```
+
+### Test structure
+
+Tests live in `src/components/__tests__/`:
+
+| File | What it covers |
+|---|---|
+| `MarkdownEditor.test.ts` | Rendering, toolbar configuration, v-model binding, placeholder, markdown output |
+| `ToolbarButton.test.ts` | Icon mapping, active/inactive state, command execution |
+| `LinkToolbarButton.test.ts` | Popover open/close, keyboard handling, click outside, link active state |
+
+---
+
 ## Development (live preview)
 
 Clone or open the package directory and run:
