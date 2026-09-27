@@ -60,6 +60,7 @@ That's it. The editor binds to `v-model` and emits the current content as a Mark
 | `modelValue` | `string` | `''` | The Markdown content (use with `v-model`) |
 | `toolbar` | `ToolbarAction[]` | See below | Which toolbar buttons to display and in what order |
 | `placeholder` | `string` | — | Placeholder text shown when the editor is empty |
+| `extensions` | `AnyExtension[]` | `[]` | Extra Tiptap extensions appended after the built-in set. Read once, when the editor is created. See [Custom extensions](#custom-extensions) |
 
 ### Default toolbar
 
@@ -92,6 +93,73 @@ The link button is always appended at the end of the toolbar.
 | Event | Payload | Description |
 |---|---|---|
 | `update:modelValue` | `string` | Emitted on every content change with the current Markdown string |
+
+---
+
+## Custom extensions
+
+Tiptap and ProseMirror are bundled inside this package, so an extension built from a separately installed `@tiptap/core` or `@tiptap/pm` would talk to a second ProseMirror copy and break. Build extensions from the constructors the package re-exports instead. They come from the same copy the editor uses:
+
+| Export | Source |
+|---|---|
+| `Extension` | `@tiptap/core` |
+| `Plugin`, `PluginKey` | `@tiptap/pm/state` |
+| `Decoration`, `DecorationSet` | `@tiptap/pm/view` |
+| Types: `AnyExtension`, `Extensions`, `EditorState`, `Transaction`, `EditorView`, `DecorationAttrs`, `ProseMirrorNode` | same packages |
+
+Pass the result through the `extensions` prop. The built-in extensions (StarterKit, Markdown) always stay registered, and your extensions come after them. Decorations change only the rendered DOM, so the emitted Markdown stays the same.
+
+The example below adds a class to every blockquote whose first line starts with a `[!type]` marker:
+
+```vue
+<script setup lang="ts">
+import { ref } from 'vue';
+import {
+  Decoration,
+  DecorationSet,
+  Extension,
+  MarkdownEditor,
+  Plugin,
+  PluginKey,
+  type ProseMirrorNode,
+} from '@alikmanukian/vue-markdown-editor';
+
+const calloutDecoration = Extension.create({
+  name: 'calloutDecoration',
+  addProseMirrorPlugins() {
+    return [
+      new Plugin({
+        key: new PluginKey('calloutDecoration'),
+        props: {
+          decorations(state) {
+            const decorations: Decoration[] = [];
+            state.doc.descendants((node: ProseMirrorNode, pos: number) => {
+              if (node.type.name !== 'blockquote') {
+                return true;
+              }
+              const match = /^\[!(\w+)\]/.exec(node.firstChild?.textContent ?? '');
+              if (match) {
+                decorations.push(Decoration.node(pos, pos + node.nodeSize, { class: `callout callout-${match[1]}` }));
+              }
+              return false;
+            });
+            return DecorationSet.create(state.doc, decorations);
+          },
+        },
+      }),
+    ];
+  },
+});
+
+const content = ref('> [!tip] Remember\n>\n> Decorations never touch the Markdown.');
+</script>
+
+<template>
+  <MarkdownEditor v-model="content" :extensions="[calloutDecoration]" />
+</template>
+```
+
+Create the extension once, outside reactive state. The prop is read when the editor is created, so changing it later has no effect.
 
 ---
 
@@ -264,7 +332,7 @@ Tests live in `src/components/__tests__/`:
 
 | File | What it covers |
 |---|---|
-| `MarkdownEditor.test.ts` | Rendering, toolbar configuration, v-model binding, placeholder, markdown output |
+| `MarkdownEditor.test.ts` | Rendering, toolbar configuration, v-model binding, placeholder, markdown output, custom extensions |
 | `ToolbarButton.test.ts` | Icon mapping, active/inactive state, command execution |
 | `LinkToolbarButton.test.ts` | Popover open/close, keyboard handling, click outside, link active state |
 

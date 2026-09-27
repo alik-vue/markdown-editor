@@ -1,6 +1,17 @@
 import { mount } from '@vue/test-utils'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
+import type { AnyExtension } from '@tiptap/core'
+import { type Editor, EditorContent } from '@tiptap/vue-3'
 import MarkdownEditor from '../MarkdownEditor.vue'
+import {
+  Decoration,
+  DecorationSet,
+  type EditorState,
+  Extension,
+  Plugin,
+  PluginKey,
+  type ProseMirrorNode,
+} from '../../index'
 
 // Wait for tiptap editor to initialize
 const tick = () => new Promise((r) => setTimeout(r, 50))
@@ -167,5 +178,109 @@ describe('MarkdownEditor', () => {
     expect(html).toContain('<blockquote>')
     expect(html).toContain('<code>')
     wrapper.unmount()
+  })
+})
+
+describe('MarkdownEditor extensions prop', () => {
+  afterEach(() => {
+    document.body.innerHTML = ''
+  })
+
+  const calloutMarkdown = ['> [!tip] Title', '>', '> Body text', '', 'Plain paragraph'].join('\n')
+
+  /**
+   * Decorates blockquotes whose first paragraph starts with `[!type]`, built only from
+   * the constructors this package exports.
+   */
+  function createCalloutDecoration(seenDocuments: string[]) {
+    const key = new PluginKey('callout-decoration')
+
+    return Extension.create({
+      name: 'calloutDecoration',
+      addProseMirrorPlugins() {
+        return [
+          new Plugin({
+            key,
+            props: {
+              decorations(state: EditorState) {
+                seenDocuments.push(state.doc.textContent)
+                const decorations: Decoration[] = []
+                state.doc.descendants((node: ProseMirrorNode, pos: number) => {
+                  if (node.type.name !== 'blockquote') {
+                    return true
+                  }
+                  const match = /^\[!(\w+)\]/.exec(node.firstChild?.textContent ?? '')
+                  if (match) {
+                    decorations.push(Decoration.node(pos, pos + node.nodeSize, { class: `callout callout-${match[1]}` }))
+                  }
+                  return false
+                })
+                return DecorationSet.create(state.doc, decorations)
+              },
+            },
+          }),
+        ]
+      },
+    })
+  }
+
+  function editorOf(wrapper: ReturnType<typeof mount>): Editor {
+    return wrapper.findComponent(EditorContent).props('editor') as Editor
+  }
+
+  async function appendTextAndCaptureMarkdown(extensions?: AnyExtension[]): Promise<string | undefined> {
+    const wrapper = mount(MarkdownEditor, {
+      attachTo: document.body,
+      props: { modelValue: calloutMarkdown, ...(extensions ? { extensions } : {}) },
+    })
+    await tick()
+
+    editorOf(wrapper).chain().focus('end').insertContent(' appended').run()
+    await tick()
+
+    const emitted = wrapper.emitted('update:modelValue')
+    wrapper.unmount()
+
+    return emitted?.[emitted.length - 1]?.[0] as string | undefined
+  }
+
+  it('registers an extension passed via the prop and lets it see the document', async () => {
+    const seenDocuments: string[] = []
+    const wrapper = mount(MarkdownEditor, {
+      attachTo: document.body,
+      props: { modelValue: calloutMarkdown, extensions: [createCalloutDecoration(seenDocuments)] },
+    })
+    await tick()
+
+    expect(editorOf(wrapper).extensionManager.extensions.map((extension) => extension.name)).toContain('calloutDecoration')
+    expect(seenDocuments.some((text) => text.includes('[!tip] Title'))).toBe(true)
+
+    const blockquote = wrapper.find('.vme-prosemirror blockquote')
+    expect(blockquote.classes()).toContain('callout')
+    expect(blockquote.classes()).toContain('callout-tip')
+    wrapper.unmount()
+  })
+
+  it('drops the decoration once the marker is removed', async () => {
+    const wrapper = mount(MarkdownEditor, {
+      attachTo: document.body,
+      props: { modelValue: calloutMarkdown, extensions: [createCalloutDecoration([])] },
+    })
+    await tick()
+    expect(wrapper.find('.vme-prosemirror blockquote').classes()).toContain('callout')
+
+    await wrapper.setProps({ modelValue: '> Just a quote' })
+    await tick()
+
+    expect(wrapper.find('.vme-prosemirror blockquote').classes()).not.toContain('callout')
+    wrapper.unmount()
+  })
+
+  it('emits the same markdown with and without a decoration extension', async () => {
+    const withoutExtensions = await appendTextAndCaptureMarkdown()
+    const withDecoration = await appendTextAndCaptureMarkdown([createCalloutDecoration([])])
+
+    expect(withoutExtensions).toBe(['> [!tip] Title', '>', '> Body text', '', 'Plain paragraph appended'].join('\n'))
+    expect(withDecoration).toBe(withoutExtensions)
   })
 })

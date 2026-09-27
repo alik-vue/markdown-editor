@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { AnyExtension } from '@tiptap/core';
 import { Markdown } from '@tiptap/markdown';
 import StarterKit from '@tiptap/starter-kit';
 import { Editor, EditorContent } from '@tiptap/vue-3';
@@ -12,6 +13,12 @@ const props = defineProps<{
     modelValue?: string;
     toolbar?: ToolbarAction[];
     placeholder?: string;
+    /**
+     * Extra Tiptap extensions appended after the built-in set (StarterKit, Markdown).
+     * Build them with the constructors exported by this package so they share its
+     * bundled Tiptap/ProseMirror copy. Read once when the editor is created.
+     */
+    extensions?: AnyExtension[];
 }>();
 
 const emit = defineEmits<{
@@ -35,7 +42,7 @@ const editor = new Editor({
             return false;
         },
     },
-    extensions: [StarterKit, Markdown],
+    extensions: [StarterKit, Markdown, ...(props.extensions ?? [])],
     content: props.modelValue ?? '',
     contentType: 'markdown',
     onUpdate({ editor }) {

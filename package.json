@@ -1,6 +1,6 @@
 {
   "name": "@alikmanukian/vue-markdown-editor",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "A Tiptap-based Markdown editor component for Vue 3",
   "type": "module",
   "main": "dist/index.cjs",
@@ -46,8 +46,10 @@
     }
   },
   "dependencies": {
+    "@tiptap/core": "^3.0.0",
     "@tiptap/extension-link": "^3.0.0",
     "@tiptap/markdown": "^3.0.0",
+    "@tiptap/pm": "^3.0.0",
     "@tiptap/starter-kit": "^3.0.0",
     "@tiptap/vue-3": "^3.0.0"
   },
