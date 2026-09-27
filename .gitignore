@@ -6,7 +6,8 @@ yarn-error.log*
 pnpm-debug.log*
 
 # Build output
-dist/
+# dist/ is committed: the app installs this package from git (git+ssh…#vX.Y.Z)
+# and needs the built files.
 build/
 
 # Coverage directory used by tools like istanbul
