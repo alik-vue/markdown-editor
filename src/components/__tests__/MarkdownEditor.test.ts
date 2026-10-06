@@ -45,6 +45,22 @@ describe('MarkdownEditor', () => {
     wrapper.unmount()
   })
 
+  it('renders the toolbar slot after the link button', async () => {
+    const wrapper = mount(MarkdownEditor, {
+      attachTo: document.body,
+      props: { toolbar: ['bold'] },
+      slots: {
+        toolbar: '<li class="extra"><button type="button">Extra</button></li>',
+      },
+    })
+    await tick()
+
+    const items = wrapper.findAll('.vme-toolbar > li')
+    expect(items.length).toBe(3)
+    expect(items[2].classes()).toContain('extra')
+    wrapper.unmount()
+  })
+
   it('renders custom toolbar actions', async () => {
     const wrapper = mount(MarkdownEditor, {
       attachTo: document.body,

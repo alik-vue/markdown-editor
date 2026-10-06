@@ -25,6 +25,14 @@ const emit = defineEmits<{
     'update:modelValue': [value: string];
 }>();
 
+defineSlots<{
+    /**
+     * Extra toolbar items after the link button. Rendered inside the toolbar's
+     * `<menu>`, so supply `<li>` elements; the editor is passed in for commands.
+     */
+    toolbar?: (props: { editor: Editor }) => unknown;
+}>();
+
 const toolbar = props.toolbar ?? ['bold', 'italic', 'strike', 'bulletList', 'orderedList'];
 
 const editor = new Editor({
@@ -72,6 +80,7 @@ watch(
             <li>
                 <LinkToolbarButton :editor="editor" />
             </li>
+            <slot name="toolbar" :editor="editor" />
         </menu>
         <div class="vme-content">
             <EditorContent :editor></EditorContent>

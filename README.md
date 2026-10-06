@@ -96,6 +96,20 @@ The link button is always appended at the end of the toolbar.
 
 ---
 
+## Slots
+
+| Slot | Props | Description |
+| --- | --- | --- |
+| `toolbar` | `{ editor }` | Extra items after the link button, inside the toolbar's `<menu>` — supply `<li>` elements. |
+
+```vue
+<MarkdownEditor v-model="text">
+  <template #toolbar>
+    <li><button type="button" class="vme-toolbar-btn">…</button></li>
+  </template>
+</MarkdownEditor>
+```
+
 ## Custom extensions
 
 Tiptap and ProseMirror are bundled inside this package, so an extension built from a separately installed `@tiptap/core` or `@tiptap/pm` would talk to a second ProseMirror copy and break. Build extensions from the constructors the package re-exports instead. They come from the same copy the editor uses:
