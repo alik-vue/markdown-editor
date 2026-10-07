@@ -1,10 +1,15 @@
 <script setup lang="ts">
 import { Editor } from '@tiptap/vue-3';
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
+import { defaultLabels, type EditorLabels } from '../labels';
 
-const props = defineProps<{
-    editor: Editor;
-}>();
+const props = withDefaults(
+    defineProps<{
+        editor: Editor;
+        labels?: EditorLabels;
+    }>(),
+    { labels: () => defaultLabels },
+);
 
 const isOpen = ref(false);
 const linkUrl = ref('');
@@ -69,7 +74,7 @@ onUnmounted(() => document.removeEventListener('mousedown', onClickOutside));
         </button>
 
         <div v-if="isOpen" class="vme-link-popover">
-            <span class="vme-link-popover-label">Link URL</span>
+            <span class="vme-link-popover-label">{{ labels.linkUrl }}</span>
             <div class="vme-link-popover-row">
                 <input
                     v-model="linkUrl"
@@ -84,7 +89,7 @@ onUnmounted(() => document.removeEventListener('mousedown', onClickOutside));
             </div>
             <button v-if="isActive" type="button" class="vme-link-remove-btn" @click="removeLink">
                 <i class="ri-delete-bin-line"></i>
-                Remove link
+                {{ labels.removeLink }}
             </button>
         </div>
     </div>

@@ -3,6 +3,8 @@ import './styles/index.css';
 
 export { MarkdownEditor };
 export type { ToolbarAction } from './components/MarkdownEditor.vue';
+export { defaultLabels } from './labels';
+export type { EditorLabels } from './labels';
 
 /**
  * Constructors from the editor's own bundled Tiptap/ProseMirror copy, so consumers can

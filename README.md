@@ -61,6 +61,10 @@ That's it. The editor binds to `v-model` and emits the current content as a Mark
 | `toolbar` | `ToolbarAction[]` | See below | Which toolbar buttons to display and in what order |
 | `placeholder` | `string` | — | Placeholder text shown when the editor is empty |
 | `extensions` | `AnyExtension[]` | `[]` | Extra Tiptap extensions appended after the built-in set. Read once, when the editor is created. See [Custom extensions](#custom-extensions) |
+| `headingLevels` | `number[]` | `[1, 2, 3]` | The heading levels the `heading` toolbar menu offers |
+| `fullscreenable` | `boolean` | `false` | Show a button at the toolbar's far end that spreads the editor over the window |
+| `fullscreen` | `boolean` | `false` | Whether the editor covers the window (use with `v-model:fullscreen`). Escape leaves it |
+| `labels` | `Partial<EditorLabels>` | English | Any text the editor draws, translated. See [Labels](#labels) |
 
 ### Default toolbar
 
@@ -68,7 +72,7 @@ That's it. The editor binds to `v-model` and emits the current content as a Mark
 ['bold', 'italic', 'strike', 'bulletList', 'orderedList']
 ```
 
-The link button is always appended at the end of the toolbar.
+The link button is appended at the end of the toolbar unless the toolbar names `link` itself.
 
 ### Available `ToolbarAction` values
 
@@ -85,6 +89,43 @@ The link button is always appended at the end of the toolbar.
 | `horizontalRule` | Horizontal rule |
 | `undo` | Undo |
 | `redo` | Redo |
+| `heading` | Paragraph style menu: plain text or a heading of `headingLevels`; the button shows the style under the caret |
+| `link` | Link popover (placed here instead of at the end) |
+| `\|` | A thin separator between groups of buttons |
+
+### Labels
+
+```ts
+interface EditorLabels {
+  textStyle: string                    // 'Text style'
+  paragraph: string                    // 'Normal text'
+  heading: (level: number) => string   // level => `Heading ${level}`
+  fullscreen: string                   // 'Fullscreen'
+  exitFullscreen: string               // 'Exit fullscreen'
+  linkUrl: string                      // 'Link URL'
+  removeLink: string                   // 'Remove link'
+}
+```
+
+Pass any subset: `:labels="{ paragraph: 'Обычный текст' }"`. `defaultLabels` is exported.
+
+### Fullscreen
+
+With `fullscreenable`, the editor becomes `position: fixed` over the window, staying where it is in
+the DOM (a dialog around it still counts it as its own). Ancestors with a `transform`, `filter`,
+`backdrop-filter`, `contain` or `will-change` are neutralised while it is fullscreen, and restored
+afterwards. Escape — from inside the editor or anywhere on the page — leaves fullscreen and is not
+passed on; an open menu closes first. A wrapper that listens for Escape itself (in the capture phase,
+above the editor) sees the key first.
+
+### Exposed
+
+The component exposes `editor`, the Tiptap instance (`ref.value.editor`).
+
+### Markdown output
+
+The empty paragraph Tiptap keeps after a document's last non-paragraph block (serialized as
+`&nbsp;`) is dropped from the emitted Markdown, so a document does not grow a line with every edit.
 
 ---
 
@@ -260,6 +301,19 @@ import './my-editor-styles.css'; // your own styles
 | `--vme-confirm-btn-bg` | `#6366f1` | Link confirm button background |
 | `--vme-confirm-btn-hover-bg` | `#4f46e5` | Link confirm button hover background |
 | `--vme-remove-btn-color` | `#ef4444` | Remove link button text color |
+| `--vme-separator-color` | `rgba(0,0,0,0.12)` | Toolbar separator (`\|`) |
+| `--vme-blockquote-border` | `2px solid rgba(0,0,0,0.2)` | Blockquote left rule (a blockquote carrying classes from an extension is left unstyled) |
+| `--vme-blockquote-padding` | `0.75rem` | Blockquote left padding |
+| `--vme-blockquote-margin` | `0.5em 0` | Blockquote margin |
+| `--vme-blockquote-color` | `#6b7280` | Blockquote text color |
+| `--vme-heading-font-weight` | `600` | Heading weight |
+| `--vme-heading-line-height` | `1.3` | Heading line height |
+| `--vme-heading-margin` | `0.9em 0 0.3em` | Heading margin |
+| `--vme-h1-font-size` … `--vme-h6-font-size` | `1.75em` … `1em` | Heading sizes |
+| `--vme-menu-item-active-color` | `#6366f1` | Current style in the paragraph style menu |
+| `--vme-fullscreen-bg` | `#ffffff` | Fullscreen background |
+| `--vme-fullscreen-padding` | `16px` | Gap around the fullscreen editor |
+| `--vme-fullscreen-z-index` | `100` | Fullscreen stacking order |
 
 ---
 

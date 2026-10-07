@@ -1,6 +1,8 @@
 import { default as MarkdownEditor } from './components/MarkdownEditor.vue';
 export { MarkdownEditor };
 export type { ToolbarAction } from './components/MarkdownEditor.vue';
+export { defaultLabels } from './labels';
+export type { EditorLabels } from './labels';
 /**
  * Constructors from the editor's own bundled Tiptap/ProseMirror copy, so consumers can
  * build extensions for the `extensions` prop without installing a second ProseMirror.
